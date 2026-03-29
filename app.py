@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import matplotlib.pyplot as plt
 
 # -----------------------------
 # PAGE CONFIG
@@ -95,7 +94,7 @@ texts = {
 t = texts[lang]
 
 # -----------------------------
-# 🔥 ULTRA CLEAR CSS
+# CSS
 # -----------------------------
 st.markdown("""
 <style>
@@ -113,17 +112,6 @@ st.markdown("""
 button[kind="primary"] { height: 75px; font-size: 24px; border-radius: 14px; }
 </style>
 """, unsafe_allow_html=True)
-
-# -----------------------------
-# LOAD DATA
-# -----------------------------
-@st.cache_data
-def load_data():
-    df = pd.read_excel("final_smart_fever_dataset.xlsx")
-    df.columns = df.columns.str.strip().str.lower()
-    return df
-
-df = load_data()
 
 # -----------------------------
 # SESSION
@@ -169,32 +157,26 @@ if st.button(t["check_status"], use_container_width=True):
 
     score = [headache, fatigue, body_ache].count(True)
 
-    # Fever
     if temperature <= 98.6: fever = "normal"
     elif temperature < 100: fever = "mild"
     elif temperature < 102: fever = "moderate"
     else: fever = "high"
 
-    # Risk
     if score == 0: risk = "low"
     elif score == 1: risk = "medium"
     else: risk = "high"
 
-    # Red Flag
     red_flag = "Yes" if temperature > 103 or days > 5 else "No"
     if red_flag == "Yes": risk = "critical"
 
-    # Save history
     st.session_state.history.append({
         "Time": datetime.now().strftime("%H:%M"),
         "Temp": temperature
     })
 
-    # -----------------------------
-    # RESULT UI
-    # -----------------------------
     st.markdown("## 📊 Result")
     col1, col2, col3 = st.columns(3)
+
     col1.markdown(f"<div class='card'><div class='label'>{t['fever']}</div><div class='fever-text'>{fever.upper()}</div></div>", unsafe_allow_html=True)
     col2.markdown(f"<div class='card'><div class='label'>{t['risk']}</div><div class='{risk}'>{risk.upper()}</div></div>", unsafe_allow_html=True)
 
@@ -204,15 +186,15 @@ if st.button(t["check_status"], use_container_width=True):
         col3.markdown(f"<div class='card'><div class='label'>{t['red_flag']}</div><div class='red-no'>{t['no']}</div></div>", unsafe_allow_html=True)
 
 # -----------------------------
-# CHART
+# CHART (UPDATED ✅)
 # -----------------------------
 st.markdown("---")
 st.subheader(t["fever_trend"])
+
 if st.session_state.history:
     df_hist = pd.DataFrame(st.session_state.history)
-    plt.figure()
-    plt.plot(df_hist["Time"], df_hist["Temp"], marker='o')
-    st.pyplot(plt)
+    df_hist["Time"] = df_hist["Time"].astype(str)
+    st.line_chart(data=df_hist.set_index("Time"))
 
 # -----------------------------
 # HOSPITAL
